@@ -1,0 +1,48 @@
+Strict
+Import mojo2
+
+Class myClass Extends App
+	Field canvas:Canvas
+
+	Field px:Int,py:Int
+	
+	Method OnCreate:Int()	
+		' destination point
+		px = 400
+		py = 200
+		
+		SetUpdateRate(60)				
+		canvas = New Canvas
+		Return 0
+	End
+
+	Method OnUpdate:Int()
+		Return 0
+	End
+	
+	Method OnRender:Int()
+		Local t:Float = Sin(Millisecs()/10.0)/2.0  + 0.5
+		
+		canvas.Clear (0,0.5,0)	
+		canvas.SetColor 0.5,0.5,0.5
+		canvas.DrawLine px,0,px,py
+		canvas.DrawLine 0,py,px,py
+		canvas.SetColor 1,1,1
+		canvas.DrawLine 0,0,LI(0,px,t),LI(0,py,t)
+		
+		canvas.DrawText "t="+t,0,py+20
+		canvas.Flush
+
+		Return 0
+	End
+
+	Method LI:Float(v1:Float,v2:Float,t:Float)
+		Return v1 + (v2-v1)*t
+	End
+
+End
+
+Function Main:Int()
+	New myClass		
+	Return 0
+End

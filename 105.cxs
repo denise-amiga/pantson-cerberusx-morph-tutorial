@@ -1,0 +1,137 @@
+Strict
+Import mojo2
+
+Class myClass Extends App
+	Field canvas:Canvas
+
+	Field img1:Image
+	Field img2:Image
+	
+	Field p1:Int[] 
+	Field p2:Int[] 
+	Field p1uv:Float[]
+	Field p2uv:Float[]
+	
+	Field w:Int = 9
+	Field h:Int = 11
+	
+	Field counter:Int=0
+	
+	Method OnCreate:Int()
+		img1 = Image.Load("image1.png",0,0)
+		img2 = Image.Load("image2.png",0,0)
+
+		' points of captain america
+		p1 = LoadMesh("image1.txt")
+		' points of black widow
+		p2 = LoadMesh("image2.txt")
+		
+		' work out uv of each point
+		p1uv = p1uv.Resize(p1.Length)
+		p2uv = p2uv.Resize(p2.Length)
+		
+		Local i:Int=0
+		i=0
+		While i<p1uv.Length()
+			' 0<uv<1 so devide coord by width or height
+			
+			'uv of cap
+			p1uv[i] = p1[i]/Float(img1.Width())
+			p1uv[i+1] = p1[i+1]/Float(img1.Height())
+
+			' uv of nat
+			p2uv[i] = p2[i]/Float(img2.Width())
+			p2uv[i+1] = p2[i+1]/Float(img2.Height())
+			i+=2
+		Wend
+		
+		SetUpdateRate(60)				
+		canvas = New Canvas
+		Return 0
+	End
+
+	Method OnUpdate:Int()
+		If KeyDown(KEY_SPACE)
+			counter+=1
+		End
+		Return 0
+	End
+	
+	Method OnRender:Int()
+		Local t:Float = Sin(counter)/2.0  + 0.5
+		
+		Local i:Int,j:Int
+		Local uv:Float[]
+				
+		canvas.Clear (0,0.5,0)	
+		
+		j=0
+		While j < h-1
+			i=0
+			While i < w-1
+				' linear interpolation of the 4 vertices of the polygon
+				Local x1:Float = LI(p1[i*2 +j*w*2 + 0],p2[i*2 +j*w*2 + 0],t)
+				Local y1:Float = LI(p1[i*2 +j*w*2 + 1],p2[i*2 +j*w*2 + 1],t) 
+
+				Local x2:Float = LI(p1[(i+1)*2 +j*w*2 + 0],p2[(i+1)*2 +j*w*2 + 0],t) 
+				Local y2:Float = LI(p1[(i+1)*2 +j*w*2 + 1],p2[(i+1)*2 +j*w*2 + 1],t) 
+
+				Local x3:Float = LI(p1[i*2 +(j+1)*w*2 + 0],p2[i*2 +(j+1)*w*2 + 0],t) 
+				Local y3:Float = LI(p1[i*2 +(j+1)*w*2 + 1],p2[i*2 +(j+1)*w*2 + 1],t) 
+
+				Local x4:Float = LI(p1[(i+1)*2 +(j+1)*w*2 + 0],p2[(i+1)*2 +(j+1)*w*2 + 0],t) 
+				Local y4:Float = LI(p1[(i+1)*2 +(j+1)*w*2 + 1],p2[(i+1)*2 +(j+1)*w*2 + 1],t) 
+				
+				' new co-ords of the polygon (from above)
+				Local cords:Float[] = [x1,y1,x2,y2,x4,y4,x3,y3]
+
+				canvas.SetAlpha 1
+				' uv of first image polygons
+				uv = [p1uv[i*2 + j*w*2], p1uv[i*2+1 + j*w*2], p1uv[(i+1)*2 + j*w*2], p1uv[(i+1)*2+1 + j*w*2], p1uv[(i+1)*2 + (j+1)*w*2], p1uv[(i+1)*2+1 + (j+1)*w*2], p1uv[i*2 + (j+1)*w*2], p1uv[i*2+1 + (j+1)*w*2]]
+				' draw captain
+				canvas.DrawPrimitives(4,1,cords,uv,img1.Material())
+
+				canvas.SetAlpha t
+				' uv of second image polygons
+				uv = [p2uv[i*2 + j*w*2], p2uv[i*2+1 + j*w*2], p2uv[(i+1)*2 + j*w*2], p2uv[(i+1)*2+1 + j*w*2], p2uv[(i+1)*2 + (j+1)*w*2], p2uv[(i+1)*2+1 + (j+1)*w*2], p2uv[i*2 + (j+1)*w*2], p2uv[i*2+1 + (j+1)*w*2]]
+				' draw Romanova
+				canvas.DrawPrimitives(4,1,cords,uv,img2.Material())
+
+				i+=1
+			Wend
+			j+=1
+		Wend
+		
+		canvas.Flush
+
+		Return 0
+	End
+
+	Method LI:Float(v1:Float,v2:Float,t:Float)
+		Return v1 + (v2-v1)*t
+	End
+
+	Method LoadMesh:Int[](file:String)
+		Print "loading mesh"
+		Local p:Int[]
+				
+		Local text:String=LoadString(file)			
+		Local lines:String[] = text.Split("~n")
+		
+		Local t:String
+		
+		For t = Eachin lines
+			If t.Trim()<>""
+				p = p.Resize(p.Length()+1)
+				p[p.Length()-1] = Int(t.Trim())
+			End
+		Next
+		
+		Return p
+	End
+End
+
+Function Main:Int()
+	New myClass		
+	Return 0
+End

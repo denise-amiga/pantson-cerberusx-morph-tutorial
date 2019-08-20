@@ -1,0 +1,78 @@
+Strict
+Import mojo2
+Import image_helper
+
+Class myClass Extends App
+	Field canvas:Canvas
+	Field img1:img,img2:img,dst_img:img
+	
+	Method OnCreate:Int()
+		img1 = New img("image1.png")
+		img2 = New img("image2.png")
+
+		dst_img = New img(640,480)
+		
+		SetUpdateRate(60)				
+		canvas = New Canvas
+		Return 0
+	End
+
+	Method OnUpdate:Int()
+		Return 0
+	End
+	
+	Method OnRender:Int()
+		Local x:Int,y:Int
+		Local t:Float = Sin(Millisecs()/10.0)/2.0+0.5
+
+		y=0
+		While y<480
+		x=0
+		While x<640
+			Local src:Int = img1.ReadPixel(x,y)
+			Local dst:Int = img2.ReadPixel(x,y)
+			dst_img.WritePixel(x,y,Mix(src,dst,t))
+			x+=1
+		Wend
+		y+=1
+		Wend
+		dst_img.UpdatePixels()
+		
+		
+		canvas.Clear(0,0,0,0)
+		canvas.DrawImage dst_img.img,0,0
+		canvas.Flush
+
+		Return 0
+	End
+	
+	Method LI:Float(v1:Float,v2:Float,t:Float)
+		Return v1 + (v2-v1)*t
+	End
+	
+	Method Mix:Int(abgr1:Int,abgr2:Int,t:Float)
+		' split into ABGR components
+		Local a1:Float = (abgr1 Shr 24) & 255
+		Local b1:Float = (abgr1 Shr 16) & 255
+		Local g1:Float = (abgr1 Shr 8) & 255
+		Local r1:Float = (abgr1 Shr 0) & 255
+
+		Local a2:Float = (abgr2 Shr 24) & 255
+		Local b2:Float = (abgr2 Shr 16) & 255
+		Local g2:Float = (abgr2 Shr 8) & 255
+		Local r2:Float = (abgr2 Shr 0) & 255
+		
+		Local c:Int = Int(LI(a1,a2,t)) Shl 24 
+		c+= Int(LI(b1,b2,t)) Shl 16 
+		c+= Int(LI(g1,g2,t)) Shl 8 
+		c+= Int(LI(r1,r2,t)) Shl 0
+		
+		Return c 
+	End
+
+End
+
+Function Main:Int()
+	New myClass		
+	Return 0
+End

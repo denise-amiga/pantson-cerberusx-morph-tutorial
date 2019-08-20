@@ -1,0 +1,73 @@
+Strict
+Import mojo2
+
+Class myClass Extends App
+	Field canvas:Canvas
+
+	Field p1:Int[] 
+	Field p2:Int[] 
+
+	Field w:Int = 3
+	Field h:Int = 3
+		
+	Method OnCreate:Int()	
+		' 9 points for sourve
+		p1 = [0,0, 320,0, 639,0, 0,120, 160,120, 639,120, 0,479, 320,479, 639,479] 
+		' .. andfor destination
+		p2 = [0,0, 320,0, 639,0, 0,360, 480,360, 639,360, 0,479, 320,479, 639,479]
+		
+		SetUpdateRate(60)				
+		canvas = New Canvas
+		Return 0
+	End
+
+	Method OnUpdate:Int()
+		Return 0
+	End
+	
+	Method OnRender:Int()
+		Local t:Float = Sin(Millisecs()/10.0)/2.0  + 0.5
+				
+		canvas.Clear (0,0.5,0)	
+
+		Local i:Int,j:Int
+		j=0
+		While j < h-1
+			' this gives a checkerboard result (draw every other polygon, just for this test)
+			i=j Mod 2
+			While i < w-1
+				' work out the 4 vertices of the new polygon, based on the linear interpolation between
+				' source points and destination points
+				Local x1:Float = LI(p1[i*2 +j*w*2 + 0],p2[i*2 +j*w*2 + 0],t)
+				Local y1:Float = LI(p1[i*2 +j*w*2 + 1],p2[i*2 +j*w*2 + 1],t) 
+
+				Local x2:Float = LI(p1[(i+1)*2 +j*w*2 + 0],p2[(i+1)*2 +j*w*2 + 0],t) 
+				Local y2:Float = LI(p1[(i+1)*2 +j*w*2 + 1],p2[(i+1)*2 +j*w*2 + 1],t) 
+
+				Local x3:Float = LI(p1[i*2 +(j+1)*w*2 + 0],p2[i*2 +(j+1)*w*2 + 0],t) 
+				Local y3:Float = LI(p1[i*2 +(j+1)*w*2 + 1],p2[i*2 +(j+1)*w*2 + 1],t) 
+
+				Local x4:Float = LI(p1[(i+1)*2 +(j+1)*w*2 + 0],p2[(i+1)*2 +(j+1)*w*2 + 0],t) 
+				Local y4:Float = LI(p1[(i+1)*2 +(j+1)*w*2 + 1],p2[(i+1)*2 +(j+1)*w*2 + 1],t) 
+
+				' draw the New polygon
+				canvas.DrawPoly([x1,y1,x2,y2,x4,y4,x3,y3])
+
+				i+=2
+			Wend
+			j+=1
+		Wend
+		canvas.Flush
+
+		Return 0
+	End
+
+	Method LI:Float(v1:Float,v2:Float,t:Float)
+		Return v1 + (v2-v1)*t
+	End
+End
+
+Function Main:Int()
+	New myClass		
+	Return 0
+End

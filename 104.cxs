@@ -1,0 +1,209 @@
+Strict
+Import mojo2
+Import image_helper
+
+Class myClass Extends App
+	Field canvas:Canvas
+
+	Field img1:img,img2:img,dst_img:img
+	
+	Field p1:point[] 
+	Field p2:point[] 
+	
+	Field w:Int = 9
+	Field h:Int = 11
+	
+	Field counter:Int=0
+	
+	Method OnCreate:Int()
+		img1 = New img("image1.png")
+		img2 = New img("image2.png")
+
+		dst_img = New img(640,480)
+
+		' points of captain america
+		p1 = LoadMesh("image1.txt")
+		' points of black widow
+		p2 = LoadMesh("image2.txt")
+			
+		SetUpdateRate(60)				
+		canvas = New Canvas
+		Return 0
+	End
+
+	Method OnUpdate:Int()
+		If KeyDown(KEY_SPACE)
+			counter+=1
+		End
+		Return 0
+	End
+	
+	Method OnRender:Int()
+		Local t:Float = Sin(Millisecs()/10)/2.0  + 0.5
+		
+		Local i:Int,j:Int
+		Local uv:Float[]
+				
+		canvas.Clear (0,0.5,0)	
+
+		j=0
+		While j < h-1
+			i=0
+			While i < w-1
+				' linear interpolation of the 4 vertices of the polygon
+				Local sx1:Int = p1[i + j*w].x
+				Local sy1:Int = p1[i + j*w].y
+				Local sx2:Int = p1[i + j*w +1].x
+				Local sy2:Int = p1[i + j*w +1].y
+				Local sx3:Int = p1[i + (j+1)*w].x
+				Local sy3:Int = p1[i + (j+1)*w].y
+				Local sx4:Int = p1[i + (j+1)*w +1].x
+				Local sy4:Int = p1[i + (j+1)*w +1].y
+				
+				Local dx1:Int = p2[i + j*w].x
+				Local dy1:Int = p2[i + j*w].y
+				Local dx2:Int = p2[i + j*w +1].x
+				Local dy2:Int = p2[i + j*w +1].y
+				Local dx3:Int = p2[i + (j+1)*w].x
+				Local dy3:Int = p2[i + (j+1)*w].y
+				Local dx4:Int = p2[i + (j+1)*w +1].x
+				Local dy4:Int = p2[i + (j+1)*w +1].y
+				
+				Local x1:Float = LI(sx1,dx1,t)
+				Local y1:Float = LI(sy1,dy1,t) 
+				Local x2:Float = LI(sx2,dx2,t)
+				Local y2:Float = LI(sy2,dy2,t) 
+				Local x3:Float = LI(sx3,dx3,t)
+				Local y3:Float = LI(sy3,dy3,t) 
+				Local x4:Float = LI(sx4,dx4,t)
+				Local y4:Float = LI(sy4,dy4,t) 
+				
+				Local xstep:Int = Max(Max(Abs(sx2-sx1),Abs(sx4-sx3)),Max(Abs(dx2-dx1),Abs(dx4-dx3)))
+				Local ystep:Int = Max(Max(Abs(sy3-sy1),Abs(sy4-sy2)),Max(Abs(dy3-dy1),Abs(dy4-dy2)))
+				
+				Local x:Int = 0
+				While x<xstep+1
+				
+					Local slx1:Float = LI(sx1,sx2,x/Float(xstep))
+					Local sly1:Float = LI(sy1,sy2,x/Float(xstep))
+					Local slx2:Float = LI(sx3,sx4,x/Float(xstep))
+					Local sly2:Float = LI(sy3,sy4,x/Float(xstep))
+
+					Local dlx1:Float = LI(dx1,dx2,x/Float(xstep))
+					Local dly1:Float = LI(dy1,dy2,x/Float(xstep))
+					Local dlx2:Float = LI(dx3,dx4,x/Float(xstep))
+					Local dly2:Float = LI(dy3,dy4,x/Float(xstep))
+
+					Local plx1:Float = LI(x1,x2,x/Float(xstep))
+					Local ply1:Float = LI(y1,y2,x/Float(xstep))
+					Local plx2:Float = LI(x3,x4,x/Float(xstep))
+					Local ply2:Float = LI(y3,y4,x/Float(xstep))
+					
+					Local y:Int = 0
+					While y<ystep+1
+						Local sx:Float = LI(slx1,slx2,y/Float(ystep))
+						Local sy:Float = LI(sly1,sly2,y/Float(ystep))
+						Local src_col:Int = img1.ReadPixel(sx,sy)
+						
+						Local dx:Float = LI(dlx1,dlx2,y/Float(ystep))
+						Local dy:Float = LI(dly1,dly2,y/Float(ystep))
+						Local dst_col:Int = img2.ReadPixel(dx,dy)
+
+						Local px:Float = LI(plx1,plx2,y/Float(ystep))
+						Local py:Float = LI(ply1,ply2,y/Float(ystep))
+						
+						dst_img.WritePixel(px,py,Mix(src_col,dst_col,t))
+						y+=1
+					Wend
+					
+					x+=1
+				Wend
+				
+				dst_img.UpdatePixels()
+
+#rem			
+				' new co-ords of the polygon (from above)
+				Local cords:Float[] = [x1,y1,x2,y2,x4,y4,x3,y3]
+
+				canvas.SetAlpha 1
+				' uv of first image polygons
+				uv = [p1uv[i*2 + j*w*2], p1uv[i*2+1 + j*w*2], p1uv[(i+1)*2 + j*w*2], p1uv[(i+1)*2+1 + j*w*2], p1uv[(i+1)*2 + (j+1)*w*2], p1uv[(i+1)*2+1 + (j+1)*w*2], p1uv[i*2 + (j+1)*w*2], p1uv[i*2+1 + (j+1)*w*2]]
+				' draw captain
+				canvas.DrawPrimitives(4,1,cords,uv,img1.Material())
+
+				canvas.SetAlpha t
+				' uv of second image polygons
+				uv = [p2uv[i*2 + j*w*2], p2uv[i*2+1 + j*w*2], p2uv[(i+1)*2 + j*w*2], p2uv[(i+1)*2+1 + j*w*2], p2uv[(i+1)*2 + (j+1)*w*2], p2uv[(i+1)*2+1 + (j+1)*w*2], p2uv[i*2 + (j+1)*w*2], p2uv[i*2+1 + (j+1)*w*2]]
+				' draw Romanova
+				canvas.DrawPrimitives(4,1,cords,uv,img2.Material())
+#end
+
+				i+=1
+			Wend
+			j+=1
+		Wend
+		
+		canvas.Clear(0,0,0,0)
+		canvas.DrawImage dst_img.img,0,0
+		canvas.Flush
+
+		Return 0
+	End
+
+	Method LI:Float(v1:Float,v2:Float,t:Float)
+		Return v1 + (v2-v1)*t
+	End
+
+	Method Mix:Int(abgr1:Int,abgr2:Int,t:Float)
+		' split into ABGR components
+		Local a1:Float = (abgr1 Shr 24) & 255
+		Local b1:Float = (abgr1 Shr 16) & 255
+		Local g1:Float = (abgr1 Shr 8) & 255
+		Local r1:Float = (abgr1 Shr 0) & 255
+
+		Local a2:Float = (abgr2 Shr 24) & 255
+		Local b2:Float = (abgr2 Shr 16) & 255
+		Local g2:Float = (abgr2 Shr 8) & 255
+		Local r2:Float = (abgr2 Shr 0) & 255
+		
+		Local c:Int = Int(LI(a1,a2,t)) Shl 24 
+		c+= Int(LI(b1,b2,t)) Shl 16 
+		c+= Int(LI(g1,g2,t)) Shl 8 
+		c+= Int(LI(r1,r2,t)) Shl 0
+		
+		Return c 
+	End
+
+	Method LoadMesh:point[](file:String)
+		Print "loading mesh"
+		Local p:point[]
+				
+		Local text:String=LoadString(file)			
+		Local lines:String[] = text.Split("~n")
+		
+		Local t:String
+		
+		Local i:Int=0
+		While i<lines.Length()
+			If lines[i].Trim()<>""
+				p = p.Resize(p.Length()+1)
+				p[p.Length()-1] = New point()
+				p[p.Length()-1].x = Int(lines[i].Trim())
+				p[p.Length()-1].y = Int(lines[i+1].Trim())
+			End
+			i+=2
+		Wend
+		
+		Return p
+	End
+End
+
+Function Main:Int()
+	New myClass		
+	Return 0
+End
+
+Class point
+	Field x:Float
+	Field y:Float
+end
