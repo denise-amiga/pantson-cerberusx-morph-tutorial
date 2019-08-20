@@ -1,3 +1,11 @@
+' ##################################################################
+' Morph 103 part 2
+' All work by Rich Hanson
+' use at own risk
+' tutorial
+' https://devdevandmoredev.blogspot.com/2019/08/morph-103-moving-pixels.html
+' ##################################################################
+
 Strict
 Import mojo2
 

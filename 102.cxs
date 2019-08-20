@@ -1,3 +1,11 @@
+' ##################################################################
+' Morph 102
+' All work by Rich Hanson
+' use at own risk
+' :tutorial
+' https://devdevandmoredev.blogspot.com/2019/08/morph-102-colour-changing.html
+' ##################################################################
+
 Strict
 Import mojo2
 Import image_helper
@@ -37,7 +45,6 @@ Class myClass Extends App
 		y+=1
 		Wend
 		dst_img.UpdatePixels()
-		
 		
 		canvas.Clear(0,0,0,0)
 		canvas.DrawImage dst_img.img,0,0

@@ -1,3 +1,11 @@
+' ##################################################################
+' Morph 104
+' All work by Rich Hanson
+' use at own risk
+' tutorial:
+' https://devdevandmoredev.blogspot.com/2019/08/morph-104-drawing-polygons.html
+' ##################################################################
+
 Strict
 Import mojo2
 Import image_helper
@@ -14,6 +22,7 @@ Class myClass Extends App
 	Field h:Int = 11
 	
 	Field counter:Int=0
+	Field polygons:Int=0
 	
 	Method OnCreate:Int()
 		img1 = New img("image1.png")
@@ -35,11 +44,14 @@ Class myClass Extends App
 		If KeyDown(KEY_SPACE)
 			counter+=1
 		End
+		If KeyHit(KEY_P)
+			polygons=1-polygons
+		End
 		Return 0
 	End
 	
 	Method OnRender:Int()
-		Local t:Float = Sin(Millisecs()/10)/2.0  + 0.5
+		Local t:Float = Sin(counter)/2.0  + 0.5
 		
 		Local i:Int,j:Int
 		Local uv:Float[]
@@ -118,33 +130,26 @@ Class myClass Extends App
 					
 					x+=1
 				Wend
-				
-				dst_img.UpdatePixels()
 
-#rem			
-				' new co-ords of the polygon (from above)
-				Local cords:Float[] = [x1,y1,x2,y2,x4,y4,x3,y3]
-
-				canvas.SetAlpha 1
-				' uv of first image polygons
-				uv = [p1uv[i*2 + j*w*2], p1uv[i*2+1 + j*w*2], p1uv[(i+1)*2 + j*w*2], p1uv[(i+1)*2+1 + j*w*2], p1uv[(i+1)*2 + (j+1)*w*2], p1uv[(i+1)*2+1 + (j+1)*w*2], p1uv[i*2 + (j+1)*w*2], p1uv[i*2+1 + (j+1)*w*2]]
-				' draw captain
-				canvas.DrawPrimitives(4,1,cords,uv,img1.Material())
-
-				canvas.SetAlpha t
-				' uv of second image polygons
-				uv = [p2uv[i*2 + j*w*2], p2uv[i*2+1 + j*w*2], p2uv[(i+1)*2 + j*w*2], p2uv[(i+1)*2+1 + j*w*2], p2uv[(i+1)*2 + (j+1)*w*2], p2uv[(i+1)*2+1 + (j+1)*w*2], p2uv[i*2 + (j+1)*w*2], p2uv[i*2+1 + (j+1)*w*2]]
-				' draw Romanova
-				canvas.DrawPrimitives(4,1,cords,uv,img2.Material())
-#end
+				If polygons=1
+					' draw polygon edge
+					dst_img.DrawLine(x1,y1,x2,y2,$ff000000)
+					dst_img.DrawLine(x1,y1,x3,y3,$ff000000)
+				End
 
 				i+=1
 			Wend
 			j+=1
 		Wend
+	
+		' flush pixels to image				
+		dst_img.UpdatePixels()
 		
 		canvas.Clear(0,0,0,0)
+		canvas.SetColor 1,1,1
 		canvas.DrawImage dst_img.img,0,0
+	  canvas.DrawText "Hold [SPACE] to morph",20,460
+	  canvas.DrawText "[p] to toggle polygons",420,460
 		canvas.Flush
 
 		Return 0
@@ -206,4 +211,4 @@ End
 Class point
 	Field x:Float
 	Field y:Float
-end
+End
