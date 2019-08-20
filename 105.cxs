@@ -1,3 +1,11 @@
+' ##################################################################
+' Morph 105
+' All work by Rich Hanson
+' use at own risk
+' tutorial:
+' https://devdevandmoredev.blogspot.com/2019/08/morph-105-optimisation.html
+' ##################################################################
+
 Strict
 Import mojo2
 
@@ -7,15 +15,14 @@ Class myClass Extends App
 	Field img1:Image
 	Field img2:Image
 	
-	Field p1:Int[] 
-	Field p2:Int[] 
-	Field p1uv:Float[]
-	Field p2uv:Float[]
+	Field p1:point[] 
+	Field p2:point[] 
 	
 	Field w:Int = 9
 	Field h:Int = 11
 	
 	Field counter:Int=0
+	Field polygons:Int=0
 	
 	Method OnCreate:Int()
 		img1 = Image.Load("image1.png",0,0)
@@ -27,22 +34,18 @@ Class myClass Extends App
 		p2 = LoadMesh("image2.txt")
 		
 		' work out uv of each point
-		p1uv = p1uv.Resize(p1.Length)
-		p2uv = p2uv.Resize(p2.Length)
-		
 		Local i:Int=0
 		i=0
-		While i<p1uv.Length()
-			' 0<uv<1 so devide coord by width or height
-			
+		While i<p1.Length()
+			' 0<uv<1 so devide coord by width or height			
 			'uv of cap
-			p1uv[i] = p1[i]/Float(img1.Width())
-			p1uv[i+1] = p1[i+1]/Float(img1.Height())
+			p1[i].u = p1[i].x/Float(img1.Width())
+			p1[i].v = p1[i].y/Float(img1.Height())
 
 			' uv of nat
-			p2uv[i] = p2[i]/Float(img2.Width())
-			p2uv[i+1] = p2[i+1]/Float(img2.Height())
-			i+=2
+			p2[i].u = p2[i].x/Float(img2.Width())
+			p2[i].v = p2[i].y/Float(img2.Height())
+			i+=1
 		Wend
 		
 		SetUpdateRate(60)				
@@ -53,6 +56,9 @@ Class myClass Extends App
 	Method OnUpdate:Int()
 		If KeyDown(KEY_SPACE)
 			counter+=1
+		End
+		If KeyHit(KEY_P)
+			polygons=1-polygons
 		End
 		Return 0
 	End
@@ -69,39 +75,71 @@ Class myClass Extends App
 		While j < h-1
 			i=0
 			While i < w-1
+				' set drawing to white
+				canvas.SetColor 1,1,1
+				
+				' this is for readability and copied from Morph 104
+				Local sx1:Int = p1[i + j*w].x
+				Local sy1:Int = p1[i + j*w].y
+				Local sx2:Int = p1[i + j*w +1].x
+				Local sy2:Int = p1[i + j*w +1].y
+				Local sx3:Int = p1[i + (j+1)*w].x
+				Local sy3:Int = p1[i + (j+1)*w].y
+				Local sx4:Int = p1[i + (j+1)*w +1].x
+				Local sy4:Int = p1[i + (j+1)*w +1].y
+				
+				Local dx1:Int = p2[i + j*w].x
+				Local dy1:Int = p2[i + j*w].y
+				Local dx2:Int = p2[i + j*w +1].x
+				Local dy2:Int = p2[i + j*w +1].y
+				Local dx3:Int = p2[i + (j+1)*w].x
+				Local dy3:Int = p2[i + (j+1)*w].y
+				Local dx4:Int = p2[i + (j+1)*w +1].x
+				Local dy4:Int = p2[i + (j+1)*w +1].y
+				
 				' linear interpolation of the 4 vertices of the polygon
-				Local x1:Float = LI(p1[i*2 +j*w*2 + 0],p2[i*2 +j*w*2 + 0],t)
-				Local y1:Float = LI(p1[i*2 +j*w*2 + 1],p2[i*2 +j*w*2 + 1],t) 
-
-				Local x2:Float = LI(p1[(i+1)*2 +j*w*2 + 0],p2[(i+1)*2 +j*w*2 + 0],t) 
-				Local y2:Float = LI(p1[(i+1)*2 +j*w*2 + 1],p2[(i+1)*2 +j*w*2 + 1],t) 
-
-				Local x3:Float = LI(p1[i*2 +(j+1)*w*2 + 0],p2[i*2 +(j+1)*w*2 + 0],t) 
-				Local y3:Float = LI(p1[i*2 +(j+1)*w*2 + 1],p2[i*2 +(j+1)*w*2 + 1],t) 
-
-				Local x4:Float = LI(p1[(i+1)*2 +(j+1)*w*2 + 0],p2[(i+1)*2 +(j+1)*w*2 + 0],t) 
-				Local y4:Float = LI(p1[(i+1)*2 +(j+1)*w*2 + 1],p2[(i+1)*2 +(j+1)*w*2 + 1],t) 
+				Local x1:Float = LI(sx1,dx1,t)
+				Local y1:Float = LI(sy1,dy1,t) 
+				Local x2:Float = LI(sx2,dx2,t)
+				Local y2:Float = LI(sy2,dy2,t) 
+				Local x3:Float = LI(sx3,dx3,t)
+				Local y3:Float = LI(sy3,dy3,t) 
+				Local x4:Float = LI(sx4,dx4,t)
+				Local y4:Float = LI(sy4,dy4,t) 
 				
 				' new co-ords of the polygon (from above)
 				Local cords:Float[] = [x1,y1,x2,y2,x4,y4,x3,y3]
 
 				canvas.SetAlpha 1
-				' uv of first image polygons
-				uv = [p1uv[i*2 + j*w*2], p1uv[i*2+1 + j*w*2], p1uv[(i+1)*2 + j*w*2], p1uv[(i+1)*2+1 + j*w*2], p1uv[(i+1)*2 + (j+1)*w*2], p1uv[(i+1)*2+1 + (j+1)*w*2], p1uv[i*2 + (j+1)*w*2], p1uv[i*2+1 + (j+1)*w*2]]
+				' copy over uv of first image polygons
+				uv = [p1[i + j*w].u, p1[i + j*w].v, p1[i+1 + j*w].u, p1[i+1 + j*w].v, p1[i+1 + (j+1)*w].u, p1[i+1 + (j+1)*w].v, p1[i + (j+1)*w].u, p1[i + (j+1)*w].v]
 				' draw captain
+				' Draw one Polygon with 4 points using coords and uv and img1
 				canvas.DrawPrimitives(4,1,cords,uv,img1.Material())
 
 				canvas.SetAlpha t
-				' uv of second image polygons
-				uv = [p2uv[i*2 + j*w*2], p2uv[i*2+1 + j*w*2], p2uv[(i+1)*2 + j*w*2], p2uv[(i+1)*2+1 + j*w*2], p2uv[(i+1)*2 + (j+1)*w*2], p2uv[(i+1)*2+1 + (j+1)*w*2], p2uv[i*2 + (j+1)*w*2], p2uv[i*2+1 + (j+1)*w*2]]
+				' copy over uv of second image polygons
+				uv = [p2[i + j*w].u, p2[i + j*w].v, p2[i+1 + j*w].u, p2[i+1 + j*w].v, p2[i+1 + (j+1)*w].u, p2[i+1 + (j+1)*w].v, p2[i + (j+1)*w].u, p2[i + (j+1)*w].v]
 				' draw Romanova
 				canvas.DrawPrimitives(4,1,cords,uv,img2.Material())
+
+				If polygons=1
+					' draw polygon edge
+					canvas.SetColor 0,0,0
+					canvas.SetAlpha 1
+					canvas.DrawLine(x1,y1,x2,y2)
+					canvas.DrawLine(x1,y1,x3,y3)
+				End
 
 				i+=1
 			Wend
 			j+=1
 		Wend
 		
+		canvas.SetColor 1,1,1
+		canvas.SetAlpha 1
+	  canvas.DrawText "Hold [SPACE] to morph",20,460
+	  canvas.DrawText "[p] to toggle polygons",420,460
 		canvas.Flush
 
 		Return 0
@@ -111,27 +149,39 @@ Class myClass Extends App
 		Return v1 + (v2-v1)*t
 	End
 
-	Method LoadMesh:Int[](file:String)
+	Method LoadMesh:point[](file:String)
 		Print "loading mesh"
-		Local p:Int[]
+		Local p:point[]
 				
 		Local text:String=LoadString(file)			
 		Local lines:String[] = text.Split("~n")
 		
 		Local t:String
 		
-		For t = Eachin lines
-			If t.Trim()<>""
+		Local i:Int=0
+		While i<lines.Length()
+			If lines[i].Trim()<>""
 				p = p.Resize(p.Length()+1)
-				p[p.Length()-1] = Int(t.Trim())
+				p[p.Length()-1] = New point()
+				p[p.Length()-1].x = Int(lines[i].Trim())
+				p[p.Length()-1].y = Int(lines[i+1].Trim())
 			End
-		Next
+			i+=2
+		Wend
 		
 		Return p
 	End
+
 End
 
 Function Main:Int()
 	New myClass		
 	Return 0
+End
+
+Class point
+	Field x:Float
+	Field y:Float
+	Field u:Float
+	Field v:Float
 End
