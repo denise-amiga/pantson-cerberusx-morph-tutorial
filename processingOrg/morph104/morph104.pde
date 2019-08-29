@@ -25,14 +25,14 @@ void setup() {
   w = 9;
   h = 11;
   
-  img1 = loadImage("https://github.com/pantson/pantson-cerberusx-morph-tutorial/raw/master/105.data/image1.png");
-  img2 = loadImage("https://github.com/pantson/pantson-cerberusx-morph-tutorial/raw/master/105.data/image2.png");
+  img1 = loadImage("image1.png");
+  img2 = loadImage("image2.png");
   dstimg = createImage(640,480,RGB);
   
   // points of captain america
-  p1 = loadMesh("https://raw.githubusercontent.com/pantson/pantson-cerberusx-morph-tutorial/master/105.data/image1.txt");
+  p1 = loadMesh("image1.txt");
   // points of black widow
-  p2 = loadMesh("https://raw.githubusercontent.com/pantson/pantson-cerberusx-morph-tutorial/master/105.data/image2.txt");
+  p2 = loadMesh("image2.txt");
   
   polygons = 0;
 }
