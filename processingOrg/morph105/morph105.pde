@@ -103,8 +103,7 @@ void draw() {
 
       if (polygons==1) {
         // draw polygions
-        color c=color(0,0,0);
-        fill(c);
+        fill(0,0,0);
         line(x1,y1,x2,y2);
         line(x1,y1,x3,y3);
       }
@@ -112,6 +111,9 @@ void draw() {
     }
     j=j+1;
   }
+  
+  fill(255,255,255);
+  text("Hold [SPACE] to morph",20,450);
 }
 
 float LI(float v1,float v2,float t) {
